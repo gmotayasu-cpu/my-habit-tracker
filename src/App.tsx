@@ -534,8 +534,8 @@ export default function App() {
                 className={`
                   group flex items-center justify-between p-4 rounded-xl transition-all duration-200 border h-full
                   ${isDone
-                    ? 'bg-gradient-to-r from-slate-800 to-slate-700 text-white border-transparent shadow-md transform scale-[1.01]'
-                    : 'bg-white/90 backdrop-blur-sm hover:bg-white text-slate-700 border-slate-200 shadow-sm'
+                    ? 'bg-gradient-to-r from-slate-800/80 to-slate-700/80 text-white border-transparent shadow-md transform scale-[1.01]'
+                    : 'bg-white/60 backdrop-blur-sm hover:bg-white/80 text-slate-700 border-slate-200/50 shadow-sm'
                   }
                 `}
               >
