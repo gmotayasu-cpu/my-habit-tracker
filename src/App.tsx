@@ -172,8 +172,8 @@ export default function App() {
             if (data.habits) setHabits(data.habits);
             if (data.records) setRecords(data.records);
             if (data.settings) {
-              if (data.settings.backgroundColor) setBackgroundColor(data.settings.backgroundColor);
-              if (data.settings.backgroundImage) setBackgroundImage(data.settings.backgroundImage);
+              if (data.settings.backgroundColor !== undefined) setBackgroundColor(data.settings.backgroundColor);
+              if (data.settings.backgroundImage !== undefined) setBackgroundImage(data.settings.backgroundImage);
             }
             setIsLoaded(true);
           } else {
@@ -184,7 +184,7 @@ export default function App() {
               records,
               settings: { backgroundColor, backgroundImage }
             };
-            setDoc(userDocRef, initialData, { merge: true });
+            setDoc(userDocRef, initialData, { merge: true }).catch(err => console.error("Initial save failed", err));
             setIsLoaded(true);
           }
         });
@@ -221,7 +221,7 @@ export default function App() {
         habits,
         records,
         settings: { backgroundColor, backgroundImage }
-      }, { merge: true });
+      }, { merge: true }).catch(err => console.error("Save failed", err));
     } else {
       // Save to localStorage
       localStorage.setItem('habit_tracker_records', JSON.stringify(records));
@@ -869,27 +869,56 @@ export default function App() {
                 アカウント設定
               </h3>
               {user ? (
-                <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200">
-                  <div className="flex items-center gap-3">
-                    {user.photoURL ? (
-                      <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full" />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                        {user.displayName?.[0] || 'U'}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200">
+                    <div className="flex items-center gap-3">
+                      {user.photoURL ? (
+                        <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                          {user.displayName?.[0] || 'U'}
+                        </div>
+                      )}
+                      <div className="text-sm">
+                        <p className="font-bold text-slate-800">{user.displayName}</p>
+                        <p className="text-xs text-slate-500">{user.email}</p>
                       </div>
-                    )}
-                    <div className="text-sm">
-                      <p className="font-bold text-slate-800">{user.displayName}</p>
-                      <p className="text-xs text-slate-500">{user.email}</p>
                     </div>
+                    <button
+                      onClick={handleLogout}
+                      className="text-xs text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+                    >
+                      <LogOut className="w-3 h-3" />
+                      ログアウト
+                    </button>
                   </div>
-                  <button
-                    onClick={handleLogout}
-                    className="text-xs text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-lg transition flex items-center gap-1"
-                  >
-                    <LogOut className="w-3 h-3" />
-                    ログアウト
-                  </button>
+
+                  <div className="bg-amber-50 p-3 rounded-lg border border-amber-100">
+                    <p className="text-xs text-amber-800 mb-2 font-medium">
+                      ⚠️ 同期がうまくいかない場合
+                    </p>
+                    <button
+                      onClick={async () => {
+                        if (!confirm('現在のこの端末のデータで、クラウド上のデータを上書きしますか？\n（他の端末の未同期データは消える可能性があります）')) return;
+                        try {
+                          const userDocRef = doc(db, 'users', user.uid);
+                          await setDoc(userDocRef, {
+                            habits,
+                            records,
+                            settings: { backgroundColor, backgroundImage }
+                          }, { merge: true });
+                          alert('クラウドへの上書き保存が完了しました！\n他の端末で再読み込みして確認してください。');
+                        } catch (error) {
+                          console.error("Force upload failed", error);
+                          alert('保存に失敗しました。');
+                        }
+                      }}
+                      className="w-full bg-white hover:bg-amber-100 text-amber-700 text-xs font-bold py-2 px-3 rounded border border-amber-200 transition flex items-center justify-center gap-2"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      この端末のデータをクラウドに強制アップロード
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center">
@@ -970,7 +999,7 @@ export default function App() {
 
       {/* Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-slate-200 px-6 py-3 pb-safe z-20">
-        <div className="max-w-md mx-auto flex justify-between items-center">
+        <div className="max-w-md mx-auto flex justify-between items-center relative">
           <button
             onClick={() => setActiveTab('today')}
             className={`flex flex-col items-center gap-1 transition ${activeTab === 'today' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
@@ -1000,8 +1029,13 @@ export default function App() {
             <BarChart2 className="w-6 h-6" />
             <span className="text-[10px] font-bold">分析</span>
           </button>
+
+          <div className="absolute -bottom-2 right-0 left-0 text-center pointer-events-none">
+            <span className="text-[8px] text-slate-300">v1.1</span>
+          </div>
         </div>
       </div>
     </div>
   );
+}
 }
