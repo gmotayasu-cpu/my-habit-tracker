@@ -33,8 +33,8 @@ import {
   User
 } from 'lucide-react';
 import { auth, db, googleProvider } from './lib/firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
+import { signInWithPopup, signOut, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // --- Gemini API Configuration ---
 const apiKey = "AIzaSyBVHOIcspWeLcH1Idq6QL2SbdMnTrt4YJ0"; // API Key injected by environment
