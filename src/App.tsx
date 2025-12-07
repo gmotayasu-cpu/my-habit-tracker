@@ -30,7 +30,9 @@ import {
     Palette,
     Image,
     LogOut,
-    User
+    User,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { auth, db, googleProvider } from './lib/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
@@ -46,6 +48,7 @@ type Habit = {
     name: string;
     icon: string;
     color: string;
+    hideInStats?: boolean;
 };
 
 type RecordMap = {
@@ -126,6 +129,17 @@ const getPast7Days = (baseDate: Date) => {
     return days;
 };
 
+const getRelativeTime = (date: Date) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffDaysNormalized = Math.round((today.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDaysNormalized === 0) return '今日';
+    if (diffDaysNormalized === 1) return '昨日';
+    return `${diffDaysNormalized}日前`;
+};
+
 // --- Components ---
 
 const IconDisplay = ({ iconName, className }: { iconName: string, className?: string }) => {
@@ -152,11 +166,6 @@ export default function App() {
     const [backgroundColor, setBackgroundColor] = useState('bg-slate-50');
     const [backgroundImage, setBackgroundImage] = useState('');
 
-    // Analysis Page State
-    const [hiddenAnalysisIds, setHiddenAnalysisIds] = useState<string[]>([]);
-    const [showStreaks, setShowStreaks] = useState(false);
-    const [isEditingAnalysis, setIsEditingAnalysis] = useState(false);
-
     // AI State
     const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
     const [isAiLoading, setIsAiLoading] = useState(false);
@@ -179,6 +188,7 @@ export default function App() {
                         const data = docSnap.data();
                         if (data.habits) setHabits(data.habits);
                         if (data.records) setRecords(data.records);
+                        if (data.aiAnalysis) setAiAnalysis(data.aiAnalysis);
                         if (data.settings) {
                             if (data.settings.backgroundColor !== undefined) setBackgroundColor(data.settings.backgroundColor);
                             if (data.settings.backgroundImage !== undefined) setBackgroundImage(data.settings.backgroundImage);
@@ -190,6 +200,7 @@ export default function App() {
                         const initialData = {
                             habits,
                             records,
+                            aiAnalysis,
                             settings: { backgroundColor, backgroundImage }
                         };
                         setDoc(userDocRef, initialData, { merge: true }).catch(err => console.error("Initial save failed", err));
@@ -216,7 +227,7 @@ export default function App() {
         });
 
         return () => unsubscribeAuth();
-    }, []); // Run once on mount (auth listener handles updates)
+    }, []);
 
     // Save data (Effect depends on auth state)
     useEffect(() => {
@@ -228,6 +239,7 @@ export default function App() {
             setDoc(userDocRef, {
                 habits,
                 records,
+                aiAnalysis: aiAnalysis || null,
                 settings: { backgroundColor, backgroundImage }
             }, { merge: true }).catch(err => console.error("Save failed", err));
         } else {
@@ -236,31 +248,11 @@ export default function App() {
             localStorage.setItem('habit_tracker_habits', JSON.stringify(habits));
             localStorage.setItem('habit_tracker_bg_color', backgroundColor);
             localStorage.setItem('habit_tracker_bg_image', backgroundImage);
+            if (aiAnalysis) {
+                localStorage.setItem('habit_tracker_ai_analysis', aiAnalysis);
+            }
         }
-    }, [records, habits, backgroundColor, backgroundImage, isLoaded, user]);
-
-    // Save AI analysis separately (Local only for now, or could sync too)
-    useEffect(() => {
-        if (aiAnalysis) {
-            localStorage.setItem('habit_tracker_ai_analysis', aiAnalysis);
-        }
-    }, [aiAnalysis]);
-
-    // Load Analysis Settings (Local only)
-    useEffect(() => {
-        const savedHidden = localStorage.getItem('habit_tracker_hidden_analysis_ids');
-        const savedStreaks = localStorage.getItem('habit_tracker_show_streaks');
-        if (savedHidden) setHiddenAnalysisIds(JSON.parse(savedHidden));
-        if (savedStreaks) setShowStreaks(JSON.parse(savedStreaks));
-    }, []);
-
-    // Save Analysis Settings (Local only)
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('habit_tracker_hidden_analysis_ids', JSON.stringify(hiddenAnalysisIds));
-            localStorage.setItem('habit_tracker_show_streaks', JSON.stringify(showStreaks));
-        }
-    }, [hiddenAnalysisIds, showStreaks, isLoaded]);
+    }, [records, habits, backgroundColor, backgroundImage, aiAnalysis, isLoaded, user]);
 
 
     // --- Handlers ---
@@ -278,7 +270,6 @@ export default function App() {
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            // Optional: Clear local state or reload to reset
             window.location.reload();
         } catch (error) {
             console.error("Logout failed", error);
@@ -303,6 +294,12 @@ export default function App() {
                 [dateStr]: newHabits
             };
         });
+    };
+
+    const toggleHabitVisibility = (id: string) => {
+        setHabits(habits.map(h =>
+            h.id === id ? { ...h, hideInStats: !h.hideInStats } : h
+        ));
     };
 
     const changeDate = (days: number) => {
@@ -337,43 +334,6 @@ export default function App() {
             [newHabits[index], newHabits[index + 1]] = [newHabits[index + 1], newHabits[index]];
         }
         setHabits(newHabits);
-    };
-
-    const getLastDoneDate = (habitId: string) => {
-        // Search backwards from today
-        const today = new Date();
-        for (let i = 0; i < 365; i++) { // Check last 365 days
-            const d = new Date(today);
-            d.setDate(today.getDate() - i);
-            const dateStr = formatDate(d);
-            if (records[dateStr]?.includes(habitId)) {
-                return { date: d, daysAgo: i };
-            }
-        }
-        return null;
-    };
-
-    const getStreak = (habitId: string) => {
-        let streak = 0;
-        const today = new Date();
-        // Check from today or yesterday depending on if done today
-        let d = new Date(today);
-
-        // If not done today, start checking from yesterday
-        if (!records[formatDate(d)]?.includes(habitId)) {
-            d.setDate(d.getDate() - 1);
-        }
-
-        while (true) {
-            const dateStr = formatDate(d);
-            if (records[dateStr]?.includes(habitId)) {
-                streak++;
-                d.setDate(d.getDate() - 1);
-            } else {
-                break;
-            }
-        }
-        return streak;
     };
 
     // --- Gemini API Handler ---
@@ -449,6 +409,36 @@ export default function App() {
     };
 
     // --- Analytics Logic ---
+
+    const currentMonthStats = useMemo(() => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const daysInMonth = getDaysInMonth(year, month);
+
+        let totalPossible = daysInMonth * habits.length;
+        let totalCompleted = 0;
+        const habitCounts: { [key: string]: number } = {};
+
+        habits.forEach(h => habitCounts[h.id] = 0);
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayRecords = records[dateStr] || [];
+            totalCompleted += dayRecords.length;
+            dayRecords.forEach(hId => {
+                if (habitCounts[hId] !== undefined) {
+                    habitCounts[hId]++;
+                }
+            });
+        }
+
+        return {
+            totalPossible,
+            totalCompleted,
+            percentage: totalPossible === 0 ? 0 : Math.round((totalCompleted / totalPossible) * 100),
+            habitCounts
+        };
+    }, [currentDate, records, habits]);
 
     const weeklyHistory = useMemo(() => {
         const days = getPast7Days(new Date());
@@ -530,6 +520,14 @@ export default function App() {
                                     </div>
 
                                     <span className="font-medium text-base flex-grow truncate">{habit.name}</span>
+
+                                    <button
+                                        onClick={() => toggleHabitVisibility(habit.id)}
+                                        className={`p-2 rounded-lg transition ${habit.hideInStats ? 'text-slate-400 bg-slate-100 hover:bg-slate-200' : 'text-blue-500 hover:bg-blue-50'}`}
+                                        title={habit.hideInStats ? "分析リストに表示する" : "分析リストから隠す"}
+                                    >
+                                        {habit.hideInStats ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
 
                                     {deletingId === habit.id ? (
                                         <div className="flex items-center gap-1">
@@ -617,7 +615,15 @@ export default function App() {
     };
 
     const renderStatsView = () => {
+        // Sort habits by completion count for the month
+        const sortedHabits = [...habits].sort((a, b) => {
+            return (currentMonthStats.habitCounts[b.id] || 0) - (currentMonthStats.habitCounts[a.id] || 0);
+        });
+
+        const maxCount = Math.max(...Object.values(currentMonthStats.habitCounts), 1);
+
         return (
+
             <div className="space-y-6">
 
                 {/* AI Analysis Card */}
@@ -664,90 +670,47 @@ export default function App() {
                     )}
                 </div>
 
-                {/* Last Done Date List */}
+                <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-sm border border-slate-100 text-center">
+                    <h3 className="text-slate-500 text-sm font-medium mb-1">
+                        {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月 の達成率
+                    </h3>
+                    <div className="text-4xl font-black text-slate-800 mb-2">
+                        {currentMonthStats.percentage}<span className="text-2xl text-slate-400">%</span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                        全習慣の合計: {currentMonthStats.totalCompleted}回
+                    </p>
+                </div>
+
                 <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-slate-100">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                            <CalendarIcon className="w-5 h-5 text-blue-500" />
-                            最終実施日
-                        </h3>
-                        <button
-                            onClick={() => setIsEditingAnalysis(!isEditingAnalysis)}
-                            className={`text-xs px-2 py-1 rounded transition ${isEditingAnalysis ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-                        >
-                            {isEditingAnalysis ? '完了' : '表示設定'}
-                        </button>
-                    </div>
-
-                    <div className="mb-4 flex items-center gap-2">
-                        <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                checked={showStreaks}
-                                onChange={(e) => setShowStreaks(e.target.checked)}
-                                className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span>連続達成回数を表示</span>
-                        </label>
-                    </div>
-
-                    <div className="space-y-3">
-                        {habits.map((habit) => {
-                            const isHidden = hiddenAnalysisIds.includes(habit.id);
-                            if (isHidden && !isEditingAnalysis) return null;
-
-                            const lastDone = getLastDoneDate(habit.id);
-                            const streak = getStreak(habit.id);
-
-                            let dateText = '未実施';
-                            if (lastDone) {
-                                const diff = lastDone.daysAgo;
-                                const dStr = lastDone.date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
-                                if (diff === 0) dateText = `${dStr} (今日)`;
-                                else if (diff === 1) dateText = `${dStr} (昨日)`;
-                                else dateText = `${dStr} (${diff}日前)`;
-                            }
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-yellow-500" />
+                        習慣別ランキング
+                    </h3>
+                    <div className="space-y-4">
+                        {sortedHabits.map((habit, idx) => {
+                            const count = currentMonthStats.habitCounts[habit.id] || 0;
+                            const barWidth = (count / maxCount) * 100;
 
                             return (
-                                <div key={habit.id} className={`flex items-center justify-between p-3 rounded-lg border ${isHidden ? 'bg-slate-50 border-dashed border-slate-300 opacity-60' : 'bg-white border-slate-100'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${habit.color} bg-opacity-10 text-slate-600`}>
-                                            <IconDisplay iconName={habit.icon} className="w-4 h-4" />
+                                <div key={habit.id} className="relative">
+                                    <div className="flex justify-between text-sm mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs font-bold w-4 ${idx < 3 ? 'text-yellow-600' : 'text-slate-400'}`}>#{idx + 1}</span>
+                                            <span className="text-slate-700 font-medium">{habit.name}</span>
                                         </div>
-                                        <div>
-                                            <div className="font-medium text-slate-700">{habit.name}</div>
-                                            <div className="text-xs text-slate-500">
-                                                {dateText}
-                                                {showStreaks && streak > 0 && <span className="ml-2 text-orange-500 font-bold">🔥 {streak}連続</span>}
-                                            </div>
-                                        </div>
+                                        <span className="text-slate-500 font-bold">{count}回</span>
                                     </div>
-
-                                    {isEditingAnalysis ? (
-                                        <button
-                                            onClick={() => {
-                                                if (isHidden) {
-                                                    setHiddenAnalysisIds(prev => prev.filter(id => id !== habit.id));
-                                                } else {
-                                                    setHiddenAnalysisIds(prev => [...prev, habit.id]);
-                                                }
-                                            }}
-                                            className={`p-1.5 rounded-full ${isHidden ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}
-                                        >
-                                            {isHidden ? <Plus className="w-4 h-4" /> : <X className="w-4 h-4" />}
-                                        </button>
-                                    ) : (
-                                        <></>
-                                    )}
+                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-1000 ${idx < 3 ? 'bg-yellow-400' : 'bg-slate-300'}`}
+                                            style={{ width: `${barWidth}%` }}
+                                        />
+                                    </div>
                                 </div>
-                            );
+                            )
                         })}
                     </div>
-                    {isEditingAnalysis && (
-                        <p className="text-xs text-slate-400 mt-2 text-center">
-                            目のアイコンで表示/非表示を切り替えられます
-                        </p>
-                    )}
                 </div>
 
                 {/* Weekly Quick View */}
@@ -774,6 +737,56 @@ export default function App() {
                                 </div>
                             )
                         })}
+                    </div>
+                </div>
+
+                {/* Last Activity List */}
+                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-slate-100">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <CalendarIcon className="w-5 h-5 text-slate-500" />
+                        最終実施日リスト
+                    </h3>
+                    <div className="space-y-2">
+                        {[...habits]
+                            .filter(h => !h.hideInStats)
+                            .map(habit => {
+                                // Find last completed date
+                                const allDates = Object.keys(records).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                                const lastDateStr = allDates.find(date => records[date]?.includes(habit.id));
+                                return {
+                                    ...habit,
+                                    lastDate: lastDateStr ? new Date(lastDateStr) : null
+                                };
+                            })
+                            .sort((a, b) => {
+                                if (!a.lastDate) return 1;
+                                if (!b.lastDate) return -1;
+                                return b.lastDate.getTime() - a.lastDate.getTime();
+                            })
+                            .map(habit => (
+                                <div key={habit.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-lg ${habit.color} bg-opacity-10 text-slate-600`}>
+                                            <IconDisplay iconName={habit.icon} className="w-4 h-4" />
+                                        </div>
+                                        <span className="font-medium text-slate-700">{habit.name}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        {habit.lastDate ? (
+                                            <div>
+                                                <span className="block text-xs font-bold text-slate-800">
+                                                    {getRelativeTime(habit.lastDate)}
+                                                </span>
+                                                <span className="block text-[10px] text-slate-400">
+                                                    {habit.lastDate.toLocaleDateString('ja-JP')}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-slate-400">ー</span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                     </div>
                 </div>
             </div>
@@ -973,6 +986,7 @@ export default function App() {
                                                     await setDoc(userDocRef, {
                                                         habits,
                                                         records,
+                                                        aiAnalysis,
                                                         settings: { backgroundColor, backgroundImage }
                                                     }, { merge: true });
                                                     alert('クラウドへの上書き保存が完了しました！\n他の端末で再読み込みして確認してください。');
@@ -1097,10 +1111,6 @@ export default function App() {
                         <BarChart2 className="w-6 h-6" />
                         <span className="text-[10px] font-bold">分析</span>
                     </button>
-
-                    <div className="absolute -bottom-2 right-0 left-0 text-center pointer-events-none">
-                        <span className="text-[8px] text-slate-300">v1.1</span>
-                    </div>
                 </div>
             </div>
         </div>
