@@ -632,7 +632,7 @@ export default function App() {
                         <CalendarIcon className="w-5 h-5 text-slate-500" />
                         最終実施日リスト
                     </h3>
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {[...habits]
                             .filter(h => !h.hideInStats)
                             .map(habit => {
