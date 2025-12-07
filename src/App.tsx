@@ -626,120 +626,6 @@ export default function App() {
 
             <div className="space-y-6">
 
-                {/* AI Analysis Card */}
-                <div className="bg-gradient-to-br from-indigo-50/90 to-purple-50/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-indigo-100">
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-bold text-indigo-900 flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-indigo-500 fill-current" />
-                            AI習慣コーチ
-                        </h3>
-                        {aiAnalysis && (
-                            <button
-                                onClick={generateAIReview}
-                                className="text-indigo-400 hover:text-indigo-600 p-1 hover:bg-indigo-100 rounded-full transition"
-                                title="再生成"
-                            >
-                                <RefreshCw className="w-4 h-4" />
-                            </button>
-                        )}
-                    </div>
-
-                    {isAiLoading ? (
-                        <div className="flex flex-col items-center justify-center py-6 text-indigo-400">
-                            <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                            <p className="text-sm">あなたの習慣データを分析中...</p>
-                        </div>
-                    ) : aiAnalysis ? (
-                        <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap bg-white/50 p-3 rounded-lg border border-indigo-100/50">
-                            {aiAnalysis}
-                        </div>
-                    ) : (
-                        <div className="text-center py-2">
-                            <p className="text-sm text-slate-500 mb-3">過去7日間のデータを分析して、<br />アドバイスをお届けします。</p>
-                            <button
-                                onClick={generateAIReview}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full text-sm shadow-md transition-all active:scale-95 flex items-center gap-2 mx-auto"
-                            >
-                                <Sparkles className="w-4 h-4" />
-                                今週の振り返りをする
-                            </button>
-                        </div>
-                    )}
-                    {aiError && (
-                        <p className="text-xs text-red-500 mt-2 text-center">{aiError}</p>
-                    )}
-                </div>
-
-                <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-sm border border-slate-100 text-center">
-                    <h3 className="text-slate-500 text-sm font-medium mb-1">
-                        {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月 の達成率
-                    </h3>
-                    <div className="text-4xl font-black text-slate-800 mb-2">
-                        {currentMonthStats.percentage}<span className="text-2xl text-slate-400">%</span>
-                    </div>
-                    <p className="text-xs text-slate-400">
-                        全習慣の合計: {currentMonthStats.totalCompleted}回
-                    </p>
-                </div>
-
-                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-slate-100">
-                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-yellow-500" />
-                        習慣別ランキング
-                    </h3>
-                    <div className="space-y-4">
-                        {sortedHabits.map((habit, idx) => {
-                            const count = currentMonthStats.habitCounts[habit.id] || 0;
-                            const barWidth = (count / maxCount) * 100;
-
-                            return (
-                                <div key={habit.id} className="relative">
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className={`text-xs font-bold w-4 ${idx < 3 ? 'text-yellow-600' : 'text-slate-400'}`}>#{idx + 1}</span>
-                                            <span className="text-slate-700 font-medium">{habit.name}</span>
-                                        </div>
-                                        <span className="text-slate-500 font-bold">{count}回</span>
-                                    </div>
-                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-1000 ${idx < 3 ? 'bg-yellow-400' : 'bg-slate-300'}`}
-                                            style={{ width: `${barWidth}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-
-                {/* Weekly Quick View */}
-                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-slate-100">
-                    <h3 className="font-bold text-slate-800 mb-4">直近1週間の推移</h3>
-                    <div className="flex justify-between items-end h-32 gap-2">
-                        {weeklyHistory.map((day, i) => {
-                            const count = day.completed.length;
-                            const heightPercent = Math.min((count / habits.length) * 100, 100);
-
-                            return (
-                                <div key={i} className="flex flex-col items-center justify-end flex-1 h-full group">
-                                    <div
-                                        className="w-full bg-blue-500 rounded-t-sm transition-all duration-300 group-hover:bg-blue-600 relative"
-                                        style={{ height: `${heightPercent}%`, minHeight: '4px' }}
-                                    >
-                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                                            {count}個
-                                        </div>
-                                    </div>
-                                    <div className="text-xs text-slate-400 mt-2 font-medium">
-                                        {day.date.toLocaleDateString('ja-JP', { weekday: 'short' })}
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-
                 {/* Last Activity List */}
                 <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-slate-100">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -787,6 +673,120 @@ export default function App() {
                                     </div>
                                 </div>
                             ))}
+                    </div>
+                </div>
+
+                {/* AI Analysis Card */}
+                <div className="bg-gradient-to-br from-indigo-50/90 to-purple-50/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-indigo-100">
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-indigo-900 flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-indigo-500 fill-current" />
+                            AI習慣コーチ
+                        </h3>
+                        {aiAnalysis && (
+                            <button
+                                onClick={generateAIReview}
+                                className="text-indigo-400 hover:text-indigo-600 p-1 hover:bg-indigo-100 rounded-full transition"
+                                title="再生成"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    {isAiLoading ? (
+                        <div className="flex flex-col items-center justify-center py-6 text-indigo-400">
+                            <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                            <p className="text-sm">あなたの習慣データを分析中...</p>
+                        </div>
+                    ) : aiAnalysis ? (
+                        <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap bg-white/50 p-3 rounded-lg border border-indigo-100/50">
+                            {aiAnalysis}
+                        </div>
+                    ) : (
+                        <div className="text-center py-2">
+                            <p className="text-sm text-slate-500 mb-3">過去7日間のデータを分析して、<br />アドバイスをお届けします。</p>
+                            <button
+                                onClick={generateAIReview}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full text-sm shadow-md transition-all active:scale-95 flex items-center gap-2 mx-auto"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                今週の振り返りをする
+                            </button>
+                        </div>
+                    )}
+                    {aiError && (
+                        <p className="text-xs text-red-500 mt-2 text-center">{aiError}</p>
+                    )}
+                </div>
+
+                {/* Weekly Quick View */}
+                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-slate-100">
+                    <h3 className="font-bold text-slate-800 mb-4">直近1週間の推移</h3>
+                    <div className="flex justify-between items-end h-32 gap-2">
+                        {weeklyHistory.map((day, i) => {
+                            const count = day.completed.length;
+                            const heightPercent = Math.min((count / habits.length) * 100, 100);
+
+                            return (
+                                <div key={i} className="flex flex-col items-center justify-end flex-1 h-full group">
+                                    <div
+                                        className="w-full bg-blue-500 rounded-t-sm transition-all duration-300 group-hover:bg-blue-600 relative"
+                                        style={{ height: `${heightPercent}%`, minHeight: '4px' }}
+                                    >
+                                        <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
+                                            {count}個
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-slate-400 mt-2 font-medium">
+                                        {day.date.toLocaleDateString('ja-JP', { weekday: 'short' })}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+
+                <div className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-sm border border-slate-100 text-center">
+                    <h3 className="text-slate-500 text-sm font-medium mb-1">
+                        {currentDate.getFullYear()}年{currentDate.getMonth() + 1}月 の達成率
+                    </h3>
+                    <div className="text-4xl font-black text-slate-800 mb-2">
+                        {currentMonthStats.percentage}<span className="text-2xl text-slate-400">%</span>
+                    </div>
+                    <p className="text-xs text-slate-400">
+                        全習慣の合計: {currentMonthStats.totalCompleted}回
+                    </p>
+                </div>
+
+                <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-slate-100">
+                    <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <Trophy className="w-5 h-5 text-yellow-500" />
+                        習慣別ランキング
+                    </h3>
+                    <div className="space-y-4">
+                        {sortedHabits.map((habit, idx) => {
+                            const count = currentMonthStats.habitCounts[habit.id] || 0;
+                            const barWidth = (count / maxCount) * 100;
+
+                            return (
+                                <div key={habit.id} className="relative">
+                                    <div className="flex justify-between text-sm mb-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs font-bold w-4 ${idx < 3 ? 'text-yellow-600' : 'text-slate-400'}`}>#{idx + 1}</span>
+                                            <span className="text-slate-700 font-medium">{habit.name}</span>
+                                        </div>
+                                        <span className="text-slate-500 font-bold">{count}回</span>
+                                    </div>
+                                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-1000 ${idx < 3 ? 'bg-yellow-400' : 'bg-slate-300'}`}
+                                            style={{ width: `${barWidth}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
             </div>
