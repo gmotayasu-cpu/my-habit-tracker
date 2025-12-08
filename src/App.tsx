@@ -39,7 +39,7 @@ import { signInWithPopup, signOut, onAuthStateChanged, type User as FirebaseUser
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // --- Gemini API Configuration ---
-const apiKey = "AIzaSyBVHOIcspWeLcH1Idq6QL2SbdMnTrt4YJ0"; // API Key injected by environment
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY; // API Key injected by environment
 
 // --- Types ---
 
