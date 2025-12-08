@@ -1083,14 +1083,6 @@ export default function App() {
             <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-slate-200 px-6 py-3 pb-safe z-20">
                 <div className="max-w-md mx-auto flex justify-between items-center relative">
                     <button
-                        onClick={() => setActiveTab('today')}
-                        className={`flex flex-col items-center gap-1 transition ${activeTab === 'today' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                        <List className="w-6 h-6" />
-                        <span className="text-[10px] font-bold">記録</span>
-                    </button>
-
-                    <button
                         onClick={() => {
                             setActiveTab('calendar');
                             setCurrentDate(new Date()); // Reset to current month when clicking tab
@@ -1099,6 +1091,14 @@ export default function App() {
                     >
                         <CalendarIcon className="w-6 h-6" />
                         <span className="text-[10px] font-bold">カレンダー</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('today')}
+                        className={`flex flex-col items-center gap-1 transition ${activeTab === 'today' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                        <List className="w-6 h-6" />
+                        <span className="text-[10px] font-bold">記録</span>
                     </button>
 
                     <button
