@@ -122,12 +122,11 @@ export default function App() {
         return () => unsubscribeAuth();
     }, []); 
 
-    // Save data (Effect depends on auth state)
+    // Save data
     useEffect(() => {
         if (!isLoaded) return;
 
         if (user) {
-            // Save to Firestore
             const userDocRef = doc(db, 'users', user.uid);
             setDoc(userDocRef, {
                 habits,
@@ -136,7 +135,6 @@ export default function App() {
                 settings: { backgroundColor, backgroundImage }
             }, { merge: true }).catch(err => console.error("Save failed", err));
         } else {
-            // Save to localStorage
             localStorage.setItem('habit_tracker_records', JSON.stringify(records));
             localStorage.setItem('habit_tracker_habits', JSON.stringify(habits));
             localStorage.setItem('habit_tracker_reading_logs', JSON.stringify(readingLogs));
@@ -152,7 +150,7 @@ export default function App() {
         }
     }, [aiAnalysis]);
 
-    // Load Analysis Settings (Local only)
+    // Load Analysis Settings
     useEffect(() => {
         const savedHidden = localStorage.getItem('habit_tracker_hidden_analysis_ids');
         const savedStreaks = localStorage.getItem('habit_tracker_show_streaks');
@@ -160,7 +158,7 @@ export default function App() {
         if (savedStreaks) setShowStreaks(JSON.parse(savedStreaks));
     }, []);
 
-    // Save Analysis Settings (Local only)
+    // Save Analysis Settings
     useEffect(() => {
         if (isLoaded) {
             localStorage.setItem('habit_tracker_hidden_analysis_ids', JSON.stringify(hiddenAnalysisIds));
@@ -189,10 +187,7 @@ export default function App() {
     const toggleHabit = (dateStr: string, habitId: string) => {
         if (isEditing) return;
         
-        // Reading Log Check Logic
         const habit = habits.find(h => h.id === habitId);
-        // Assuming 'Reading' is identified by ID 'h1' or name '読書'
-        // If ID is dynamically separated, name check is safer for guest default, but ID is 'h1' in default constant.
         const isReadingHabit = habitId === 'h1' || habit?.name === '読書';
         
         setRecords(prev => {
@@ -445,14 +440,6 @@ export default function App() {
             <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-slate-200 px-6 py-3 pb-safe z-20">
                 <div className="max-w-md mx-auto flex justify-between items-center relative">
                     <button
-                        onClick={() => setActiveTab('today')}
-                        className={`flex flex-col items-center gap-1 transition ${activeTab === 'today' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                        <List className="w-6 h-6" />
-                        <span className="text-[10px] font-bold">記録</span>
-                    </button>
-
-                    <button
                         onClick={() => {
                             setActiveTab('calendar');
                             setCurrentDate(new Date()); 
@@ -461,6 +448,14 @@ export default function App() {
                     >
                         <CalendarIcon className="w-6 h-6" />
                         <span className="text-[10px] font-bold">カレンダー</span>
+                    </button>
+
+                    <button
+                        onClick={() => setActiveTab('today')}
+                        className={`flex flex-col items-center gap-1 transition ${activeTab === 'today' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                        <List className="w-6 h-6" />
+                        <span className="text-[10px] font-bold">記録</span>
                     </button>
 
                     <button
