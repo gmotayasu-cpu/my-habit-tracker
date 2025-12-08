@@ -15,7 +15,7 @@ import { IconDisplay } from './IconDisplay';
 type StatsViewProps = {
     habits: Habit[];
     records: RecordMap;
-    readingLogs: ReadingLog[]; // NEW
+    readingLogs: ReadingLog[]; 
     aiAnalysis: string | null;
     isAiLoading: boolean;
     generateAIReview: () => void;
@@ -31,7 +31,7 @@ type StatsViewProps = {
 export const StatsView: React.FC<StatsViewProps> = ({
     habits,
     records,
-    readingLogs = [], // Default empty
+    readingLogs = [], 
     aiAnalysis,
     isAiLoading,
     generateAIReview,
@@ -107,50 +107,6 @@ export const StatsView: React.FC<StatsViewProps> = ({
 
     return (
         <div className="space-y-6">
-
-            {/* AI Analysis Card */}
-            <div className="bg-gradient-to-br from-indigo-50/90 to-purple-50/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-indigo-100">
-                <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-bold text-indigo-900 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-indigo-500 fill-current" />
-                        AI習慣コーチ
-                    </h3>
-                    {aiAnalysis && (
-                        <button
-                            onClick={generateAIReview}
-                            className="text-indigo-400 hover:text-indigo-600 p-1 hover:bg-indigo-100 rounded-full transition"
-                            title="再生成"
-                        >
-                            <RefreshCw className="w-4 h-4" />
-                        </button>
-                    )}
-                </div>
-
-                {isAiLoading ? (
-                    <div className="flex flex-col items-center justify-center py-6 text-indigo-400">
-                        <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                        <p className="text-sm">あなたの習慣データを分析中...</p>
-                    </div>
-                ) : aiAnalysis ? (
-                    <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap bg-white/50 p-3 rounded-lg border border-indigo-100/50">
-                        {aiAnalysis}
-                    </div>
-                ) : (
-                    <div className="text-center py-2">
-                        <p className="text-sm text-slate-500 mb-3">過去7日間のデータを分析して、<br />アドバイスをお届けします。</p>
-                        <button
-                            onClick={generateAIReview}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full text-sm shadow-md transition-all active:scale-95 flex items-center gap-2 mx-auto"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            今週の振り返りをする
-                        </button>
-                    </div>
-                )}
-                {aiError && (
-                    <p className="text-xs text-red-500 mt-2 text-center">{aiError}</p>
-                )}
-            </div>
 
             {/* Last Done Date List */}
             <div className="bg-white/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-slate-100">
@@ -231,7 +187,7 @@ export const StatsView: React.FC<StatsViewProps> = ({
                 </div>
             </div>
 
-            {/* Reading Stats - NEW SECTION */}
+            {/* Reading Stats */}
             <div className="bg-blue-50/80 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-blue-100">
                 <h3 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-blue-600" />
@@ -278,6 +234,50 @@ export const StatsView: React.FC<StatsViewProps> = ({
                         )
                     })}
                 </div>
+            </div>
+            
+            {/* AI Analysis Card (Moved to Bottom) */}
+            <div className="bg-gradient-to-br from-indigo-50/90 to-purple-50/90 backdrop-blur-sm p-5 rounded-xl shadow-sm border border-indigo-100">
+                <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-indigo-900 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-indigo-500 fill-current" />
+                        AI習慣コーチ
+                    </h3>
+                    {aiAnalysis && (
+                        <button
+                            onClick={generateAIReview}
+                            className="text-indigo-400 hover:text-indigo-600 p-1 hover:bg-indigo-100 rounded-full transition"
+                            title="再生成"
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+
+                {isAiLoading ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-indigo-400">
+                        <Loader2 className="w-8 h-8 animate-spin mb-2" />
+                        <p className="text-sm">あなたの習慣データを分析中...</p>
+                    </div>
+                ) : aiAnalysis ? (
+                    <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap bg-white/50 p-3 rounded-lg border border-indigo-100/50">
+                        {aiAnalysis}
+                    </div>
+                ) : (
+                    <div className="text-center py-2">
+                        <p className="text-sm text-slate-500 mb-3">過去7日間のデータを分析して、<br />アドバイスをお届けします。</p>
+                        <button
+                            onClick={generateAIReview}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-full text-sm shadow-md transition-all active:scale-95 flex items-center gap-2 mx-auto"
+                        >
+                            <Sparkles className="w-4 h-4" />
+                            今週の振り返りをする
+                        </button>
+                    </div>
+                )}
+                {aiError && (
+                    <p className="text-xs text-red-500 mt-2 text-center">{aiError}</p>
+                )}
             </div>
         </div>
     );
