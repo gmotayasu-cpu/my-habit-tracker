@@ -39,7 +39,7 @@ import { signInWithPopup, signOut, onAuthStateChanged, type User as FirebaseUser
 import { doc, setDoc, onSnapshot } from 'firebase/firestore';
 
 // --- Gemini API Configuration ---
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY; // API Key injected by environment
+const apiKey = "AIzaSyAaYVOaJoeqncW76lipDtHsPclkTYTz8ME"; // API Key
 
 // --- Types ---
 
@@ -339,6 +339,12 @@ export default function App() {
     // --- Gemini API Handler ---
 
     const generateAIReview = async () => {
+        if (!apiKey) {
+            alert('APIキーが読み込まれていません。\nローカルで実行中の場合は、ターミナルで Ctrl+C を押してサーバーを停止し、npm run dev で再起動してください。\nデプロイ済みの場合は、ホスティングサービスの環境変数に VITE_GEMINI_API_KEY を設定してください。');
+            console.error('API Key is missing. Make sure VITE_GEMINI_API_KEY is set in .env and server is restarted.');
+            return;
+        }
+
         setIsAiLoading(true);
         setAiError(null);
 
