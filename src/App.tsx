@@ -465,6 +465,7 @@ export default function App() {
                         setActiveTab={setActiveTab}
                         records={records}
                         habits={habits}
+                        readingLogs={readingLogs}
                     />
                 )}
                 {activeTab === 'stats' && (

@@ -102,16 +102,19 @@ export const StatsView: React.FC<StatsViewProps> = ({
         const mangas = readingLogs.filter(l => l.genre === 'manga').sort((a, b) => b.date.localeCompare(a.date));
         
         return {
-            lastNovel: novels[0] ? novels[0].date : null,
-            lastPractical: practicals[0] ? practicals[0].date : null,
-            lastManga: mangas[0] ? mangas[0].date : null
+            lastNovel: novels[0] ? { date: novels[0].date, title: novels[0].title } : null,
+            lastPractical: practicals[0] ? { date: practicals[0].date, title: practicals[0].title } : null,
+            lastManga: mangas[0] ? { date: mangas[0].date, title: mangas[0].title } : null
         };
     }, [readingLogs]);
 
-    const formatLogDate = (dateStr: string | null) => {
-        if (!dateStr) return '記録なし';
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short' });
+    const formatLogDate = (data: { date: string; title: string } | null) => {
+        if (!data) return { date: '記録なし', title: '' };
+        const d = new Date(data.date);
+        return {
+            date: d.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short' }),
+            title: data.title || ''
+        };
     };
 
     return (
@@ -206,20 +209,35 @@ export const StatsView: React.FC<StatsViewProps> = ({
                      <div className="bg-white p-3 rounded-lg border border-blue-100 text-center">
                         <div className="text-xs text-slate-400 mb-1">小説</div>
                         <div className="font-bold text-slate-700 text-sm">
-                            {formatLogDate(readingStats.lastNovel)}
+                            {formatLogDate(readingStats.lastNovel).date}
                         </div>
+                        {formatLogDate(readingStats.lastNovel).title && (
+                            <div className="text-xs text-slate-500 mt-1 truncate" title={formatLogDate(readingStats.lastNovel).title}>
+                                📕 {formatLogDate(readingStats.lastNovel).title}
+                            </div>
+                        )}
                      </div>
                      <div className="bg-white p-3 rounded-lg border border-blue-100 text-center">
                         <div className="text-xs text-slate-400 mb-1">実用書</div>
                         <div className="font-bold text-slate-700 text-sm">
-                            {formatLogDate(readingStats.lastPractical)}
+                            {formatLogDate(readingStats.lastPractical).date}
                         </div>
+                        {formatLogDate(readingStats.lastPractical).title && (
+                            <div className="text-xs text-slate-500 mt-1 truncate" title={formatLogDate(readingStats.lastPractical).title}>
+                                📗 {formatLogDate(readingStats.lastPractical).title}
+                            </div>
+                        )}
                      </div>
                      <div className="bg-white p-3 rounded-lg border border-blue-100 text-center">
                         <div className="text-xs text-slate-400 mb-1">漫画</div>
                         <div className="font-bold text-slate-700 text-sm">
-                            {formatLogDate(readingStats.lastManga)}
+                            {formatLogDate(readingStats.lastManga).date}
                         </div>
+                        {formatLogDate(readingStats.lastManga).title && (
+                            <div className="text-xs text-slate-500 mt-1 truncate" title={formatLogDate(readingStats.lastManga).title}>
+                                📚 {formatLogDate(readingStats.lastManga).title}
+                            </div>
+                        )}
                      </div>
                 </div>
             </div>
