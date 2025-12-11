@@ -99,10 +99,12 @@ export const StatsView: React.FC<StatsViewProps> = ({
     const readingStats = useMemo(() => {
         const novels = readingLogs.filter(l => l.genre === 'novel').sort((a, b) => b.date.localeCompare(a.date));
         const practicals = readingLogs.filter(l => l.genre === 'practical').sort((a, b) => b.date.localeCompare(a.date));
+        const mangas = readingLogs.filter(l => l.genre === 'manga').sort((a, b) => b.date.localeCompare(a.date));
         
         return {
             lastNovel: novels[0] ? novels[0].date : null,
-            lastPractical: practicals[0] ? practicals[0].date : null
+            lastPractical: practicals[0] ? practicals[0].date : null,
+            lastManga: mangas[0] ? mangas[0].date : null
         };
     }, [readingLogs]);
 
@@ -200,17 +202,23 @@ export const StatsView: React.FC<StatsViewProps> = ({
                     <BookOpen className="w-5 h-5 text-blue-600" />
                     読書データ
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-3">
                      <div className="bg-white p-3 rounded-lg border border-blue-100 text-center">
                         <div className="text-xs text-slate-400 mb-1">小説</div>
-                        <div className="font-bold text-slate-700">
+                        <div className="font-bold text-slate-700 text-sm">
                             {formatLogDate(readingStats.lastNovel)}
                         </div>
                      </div>
                      <div className="bg-white p-3 rounded-lg border border-blue-100 text-center">
                         <div className="text-xs text-slate-400 mb-1">実用書</div>
-                        <div className="font-bold text-slate-700">
+                        <div className="font-bold text-slate-700 text-sm">
                             {formatLogDate(readingStats.lastPractical)}
+                        </div>
+                     </div>
+                     <div className="bg-white p-3 rounded-lg border border-blue-100 text-center">
+                        <div className="text-xs text-slate-400 mb-1">漫画</div>
+                        <div className="font-bold text-slate-700 text-sm">
+                            {formatLogDate(readingStats.lastManga)}
                         </div>
                      </div>
                 </div>
