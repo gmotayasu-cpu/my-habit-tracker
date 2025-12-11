@@ -43,6 +43,7 @@ export default function App() {
     const [workTags, setWorkTags] = useState<WorkTag[]>(DEFAULT_WORK_TAGS);
     const [workLogs, setWorkLogs] = useState<DailyWorkLog>({});
     const [isLoaded, setIsLoaded] = useState(false);
+    const [isSyncedFromCloud, setIsSyncedFromCloud] = useState(false); // Prevent save before cloud data loads
 
     // Edit Mode State
     const [isEditing, setIsEditing] = useState(false);
@@ -98,6 +99,7 @@ export default function App() {
                             if (data.settings.backgroundColor !== undefined) setBackgroundColor(data.settings.backgroundColor);
                             if (data.settings.backgroundImage !== undefined) setBackgroundImage(data.settings.backgroundImage);
                         }
+                        setIsSyncedFromCloud(true);
                         setIsLoaded(true);
                     } else {
                         // First time login or no data: Upload local data to Firestore
@@ -144,6 +146,8 @@ export default function App() {
     // Save data
     useEffect(() => {
         if (!isLoaded) return;
+        // Don't save until we've synced from cloud (prevents overwriting with defaults)
+        if (user && !isSyncedFromCloud) return;
 
         if (user) {
             const userDocRef = doc(db, 'users', user.uid);
@@ -164,7 +168,7 @@ export default function App() {
             localStorage.setItem('habit_tracker_bg_color', backgroundColor);
             localStorage.setItem('habit_tracker_bg_image', backgroundImage);
         }
-    }, [records, habits, readingLogs, workTags, workLogs, backgroundColor, backgroundImage, isLoaded, user]);
+    }, [records, habits, readingLogs, workTags, workLogs, backgroundColor, backgroundImage, isLoaded, isSyncedFromCloud, user]);
 
     // Save AI analysis separately
     useEffect(() => {
