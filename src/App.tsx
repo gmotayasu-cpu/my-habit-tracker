@@ -18,6 +18,7 @@ import { CalendarView } from './components/CalendarView';
 import { StatsView } from './components/StatsView';
 import { SettingsModal } from './components/SettingsModal';
 import { ReadingLogModal } from './components/ReadingLogModal';
+import { ReadingActionDialog } from './components/ReadingActionDialog';
 
 // Utils & Types & Constants
 import { formatDate, getPast7Days } from './utils/dateUtils';
@@ -68,6 +69,7 @@ export default function App() {
     // Reading Log Modal State
     const [showReadingModal, setShowReadingModal] = useState(false);
     const [pendingReadingDate, setPendingReadingDate] = useState<string | null>(null);
+    const [showReadingActionDialog, setShowReadingActionDialog] = useState(false);
 
     // --- Effects ---
 
@@ -216,28 +218,61 @@ export default function App() {
         
         const habit = habits.find(h => h.id === habitId);
         const isReadingHabit = habitId === 'h1' || habit?.name === '読書';
+        const currentHabits = records[dateStr] || [];
+        const isCompleted = currentHabits.includes(habitId);
         
+        // 読書が完了済みの場合はダイアログを表示
+        if (isCompleted && isReadingHabit) {
+            setPendingReadingDate(dateStr);
+            setShowReadingActionDialog(true);
+            return;
+        }
+        
+        // 読書を新規追加する場合はモーダルを表示
+        if (!isCompleted && isReadingHabit) {
+            setPendingReadingDate(dateStr);
+            setShowReadingModal(true);
+        }
+        
+        // 通常のトグル処理
         setRecords(prev => {
-            const currentHabits = prev[dateStr] || [];
-            const isCompleted = currentHabits.includes(habitId);
-
-            if (!isCompleted && isReadingHabit) {
-                setPendingReadingDate(dateStr);
-                setShowReadingModal(true);
-            }
-
             let newHabits;
             if (isCompleted) {
                 newHabits = currentHabits.filter(id => id !== habitId);
             } else {
                 newHabits = [...currentHabits, habitId];
             }
-
             return {
                 ...prev,
                 [dateStr]: newHabits
             };
         });
+    };
+
+    // 読書の追加記録ハンドラ
+    const handleReadingAddMore = () => {
+        setShowReadingActionDialog(false);
+        setShowReadingModal(true);
+    };
+
+    // 読書の削除ハンドラ
+    const handleReadingDelete = () => {
+        if (!pendingReadingDate) return;
+        
+        // 習慣記録から削除
+        setRecords(prev => {
+            const currentHabits = prev[pendingReadingDate] || [];
+            return {
+                ...prev,
+                [pendingReadingDate]: currentHabits.filter(id => id !== 'h1' && habits.find(h => h.id === id)?.name !== '読書')
+            };
+        });
+        
+        // 読書ログも削除（オプション）
+        setReadingLogs(prev => prev.filter(log => log.date !== pendingReadingDate));
+        
+        setShowReadingActionDialog(false);
+        setPendingReadingDate(null);
     };
     
     const handleSaveReadingLog = (logs: Omit<ReadingLog, 'id' | 'habitId' | 'date'>[]) => {
@@ -501,6 +536,17 @@ export default function App() {
                 }}
                 onSave={handleSaveReadingLog}
                 previousTitles={[...new Set(readingLogs.map(l => l.title).filter(t => t))]}
+            />
+
+            <ReadingActionDialog
+                isOpen={showReadingActionDialog}
+                onClose={() => {
+                    setShowReadingActionDialog(false);
+                    setPendingReadingDate(null);
+                }}
+                onAddMore={handleReadingAddMore}
+                onDelete={handleReadingDelete}
+            
             />
 
             <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-slate-200 px-6 py-3 pb-safe z-20">
