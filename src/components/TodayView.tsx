@@ -10,6 +10,8 @@ import {
     Check
 } from 'lucide-react';
 import type { Habit, RecordMap } from '../types';
+import type { WorkTag, DailyWorkLog } from '../types/workLogTypes';
+import { WorkLogBlock } from './WorkLogBlock';
 import { formatDate } from '../utils/dateUtils';
 import { IconDisplay } from './IconDisplay';
 
@@ -27,6 +29,11 @@ type TodayViewProps = {
     confirmDeleteHabit: (id: string) => void;
     moveHabit: (index: number, direction: 'up' | 'down') => void;
     toggleHabit: (dateStr: string, habitId: string) => void;
+    // Work Log props
+    workTags: WorkTag[];
+    workLogs: DailyWorkLog;
+    toggleWorkLog: (dateStr: string, tagId: string) => void;
+    updateWorkTags: (tags: WorkTag[]) => void;
 };
 
 export const TodayView: React.FC<TodayViewProps> = ({
@@ -42,7 +49,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
     setDeletingId,
     confirmDeleteHabit,
     moveHabit,
-    toggleHabit
+    toggleHabit,
+    workTags,
+    workLogs,
+    toggleWorkLog,
+    updateWorkTags
 }) => {
     const dateStr = formatDate(currentDate);
     const completedIds = records[dateStr] || [];
@@ -167,6 +178,17 @@ export const TodayView: React.FC<TodayViewProps> = ({
                     );
                 })}
             </div>
+
+            {/* Work Log Section */}
+            {!isEditing && (
+                <WorkLogBlock
+                    workTags={workTags}
+                    workLogs={workLogs}
+                    dateStr={dateStr}
+                    onToggle={toggleWorkLog}
+                    onUpdateTags={updateWorkTags}
+                />
+            )}
 
             {/* Add New Habit Form (Only in Edit Mode) */}
             {isEditing && (

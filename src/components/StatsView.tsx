@@ -9,6 +9,8 @@ import {
     BookOpen
 } from 'lucide-react';
 import type { Habit, RecordMap, ReadingLog } from '../types';
+import type { WorkTag, DailyWorkLog } from '../types/workLogTypes';
+import { WorkLogStats } from './WorkLogStats';
 import { formatDate, getPast7Days } from '../utils/dateUtils';
 import { IconDisplay } from './IconDisplay';
 
@@ -26,6 +28,9 @@ type StatsViewProps = {
     setIsEditingAnalysis: (editing: boolean) => void;
     hiddenAnalysisIds: string[];
     setHiddenAnalysisIds: (ids: string[] | ((prev: string[]) => string[])) => void;
+    // Work Log props
+    workTags: WorkTag[];
+    workLogs: DailyWorkLog;
 };
 
 export const StatsView: React.FC<StatsViewProps> = ({
@@ -41,7 +46,9 @@ export const StatsView: React.FC<StatsViewProps> = ({
     isEditingAnalysis,
     setIsEditingAnalysis,
     hiddenAnalysisIds,
-    setHiddenAnalysisIds
+    setHiddenAnalysisIds,
+    workTags,
+    workLogs
 }) => {
     // --- Helper Logic ---
     const getLastDoneDate = (habitId: string) => {
@@ -279,6 +286,12 @@ export const StatsView: React.FC<StatsViewProps> = ({
                     <p className="text-xs text-red-500 mt-2 text-center">{aiError}</p>
                 )}
             </div>
+
+            {/* Work Log Stats Section */}
+            <WorkLogStats
+                workTags={workTags}
+                workLogs={workLogs}
+            />
         </div>
     );
 };

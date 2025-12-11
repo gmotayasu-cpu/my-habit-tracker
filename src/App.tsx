@@ -23,6 +23,9 @@ import { ReadingLogModal } from './components/ReadingLogModal';
 import { formatDate, getPast7Days } from './utils/dateUtils';
 import type { Habit, RecordMap, ReadingLog } from './types';
 import { DEFAULT_HABITS } from './constants';
+import type { WorkTag, DailyWorkLog, WorkAmountLevel } from './types/workLogTypes';
+import { nextWorkLevel } from './types/workLogTypes';
+import { DEFAULT_WORK_TAGS } from './constants/workLogConstants';
 
 // --- Gemini API Configuration ---
 const apiKey = "AIzaSyBVHOIcspWeLcH1Idq6QL2SbdMnTrt4YJ0"; 
@@ -37,6 +40,8 @@ export default function App() {
     const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
     const [records, setRecords] = useState<RecordMap>({});
     const [readingLogs, setReadingLogs] = useState<ReadingLog[]>([]);
+    const [workTags, setWorkTags] = useState<WorkTag[]>(DEFAULT_WORK_TAGS);
+    const [workLogs, setWorkLogs] = useState<DailyWorkLog>({});
     const [isLoaded, setIsLoaded] = useState(false);
 
     // Edit Mode State
@@ -81,6 +86,14 @@ export default function App() {
                         if (data.habits) setHabits(data.habits);
                         if (data.records) setRecords(data.records);
                         if (data.readingLogs) setReadingLogs(data.readingLogs);
+                        // Work Log data
+                        if (data.workTags) {
+                            setWorkTags(data.workTags);
+                        } else {
+                            // Initialize default work tags for new users
+                            setWorkTags(DEFAULT_WORK_TAGS);
+                        }
+                        if (data.workLogs) setWorkLogs(data.workLogs);
                         if (data.settings) {
                             if (data.settings.backgroundColor !== undefined) setBackgroundColor(data.settings.backgroundColor);
                             if (data.settings.backgroundImage !== undefined) setBackgroundImage(data.settings.backgroundImage);
@@ -92,6 +105,8 @@ export default function App() {
                             habits,
                             records,
                             readingLogs,
+                            workTags: DEFAULT_WORK_TAGS,
+                            workLogs: {},
                             settings: { backgroundColor, backgroundImage }
                         };
                         setDoc(userDocRef, initialData, { merge: true }).catch(err => console.error("Initial save failed", err));
@@ -105,6 +120,8 @@ export default function App() {
                 const savedRecords = localStorage.getItem('habit_tracker_records');
                 const savedHabits = localStorage.getItem('habit_tracker_habits');
                 const savedLogs = localStorage.getItem('habit_tracker_reading_logs');
+                const savedWorkTags = localStorage.getItem('habit_tracker_work_tags');
+                const savedWorkLogs = localStorage.getItem('habit_tracker_work_logs');
                 const savedAnalysis = localStorage.getItem('habit_tracker_ai_analysis');
                 const savedBg = localStorage.getItem('habit_tracker_bg_color');
                 const savedBgImage = localStorage.getItem('habit_tracker_bg_image');
@@ -112,6 +129,8 @@ export default function App() {
                 if (savedRecords) setRecords(JSON.parse(savedRecords));
                 if (savedHabits) setHabits(JSON.parse(savedHabits));
                 if (savedLogs) setReadingLogs(JSON.parse(savedLogs));
+                if (savedWorkTags) setWorkTags(JSON.parse(savedWorkTags));
+                if (savedWorkLogs) setWorkLogs(JSON.parse(savedWorkLogs));
                 if (savedAnalysis) setAiAnalysis(savedAnalysis);
                 if (savedBg) setBackgroundColor(savedBg);
                 if (savedBgImage) setBackgroundImage(savedBgImage);
@@ -132,16 +151,20 @@ export default function App() {
                 habits,
                 records,
                 readingLogs,
+                workTags,
+                workLogs,
                 settings: { backgroundColor, backgroundImage }
             }, { merge: true }).catch(err => console.error("Save failed", err));
         } else {
             localStorage.setItem('habit_tracker_records', JSON.stringify(records));
             localStorage.setItem('habit_tracker_habits', JSON.stringify(habits));
             localStorage.setItem('habit_tracker_reading_logs', JSON.stringify(readingLogs));
+            localStorage.setItem('habit_tracker_work_tags', JSON.stringify(workTags));
+            localStorage.setItem('habit_tracker_work_logs', JSON.stringify(workLogs));
             localStorage.setItem('habit_tracker_bg_color', backgroundColor);
             localStorage.setItem('habit_tracker_bg_image', backgroundImage);
         }
-    }, [records, habits, readingLogs, backgroundColor, backgroundImage, isLoaded, user]);
+    }, [records, habits, readingLogs, workTags, workLogs, backgroundColor, backgroundImage, isLoaded, user]);
 
     // Save AI analysis separately
     useEffect(() => {
@@ -226,6 +249,36 @@ export default function App() {
         setReadingLogs(prev => [...prev, newLog]);
         setShowReadingModal(false);
         setPendingReadingDate(null);
+    };
+
+    // Toggle work log level for a tag on a specific date
+    const toggleWorkLog = (dateStr: string, tagId: string) => {
+        setWorkLogs(prev => {
+            const dayLogs = prev[dateStr] || {};
+            const currentLevel = dayLogs[tagId] as WorkAmountLevel | undefined;
+            const newLevel = nextWorkLevel(currentLevel);
+            
+            if (newLevel === undefined) {
+                // Remove the tag from this date
+                const { [tagId]: _, ...rest } = dayLogs;
+                if (Object.keys(rest).length === 0) {
+                    // Remove the date entirely if no tags left
+                    const { [dateStr]: __, ...restDates } = prev;
+                    return restDates;
+                }
+                return { ...prev, [dateStr]: rest };
+            } else {
+                return {
+                    ...prev,
+                    [dateStr]: { ...dayLogs, [tagId]: newLevel }
+                };
+            }
+        });
+    };
+
+    // Update work tags (for settings modal)
+    const updateWorkTags = (newTags: WorkTag[]) => {
+        setWorkTags(newTags);
     };
 
     const changeDate = (days: number) => {
@@ -395,6 +448,10 @@ export default function App() {
                         confirmDeleteHabit={confirmDeleteHabit}
                         moveHabit={moveHabit}
                         toggleHabit={toggleHabit}
+                        workTags={workTags}
+                        workLogs={workLogs}
+                        toggleWorkLog={toggleWorkLog}
+                        updateWorkTags={updateWorkTags}
                     />
                 )}
                 {activeTab === 'calendar' && (
@@ -424,6 +481,9 @@ export default function App() {
                         setIsEditingAnalysis={setIsEditingAnalysis}
                         hiddenAnalysisIds={hiddenAnalysisIds}
                         setHiddenAnalysisIds={setHiddenAnalysisIds}
+                        // Work Log Props
+                        workTags={workTags}
+                        workLogs={workLogs}
                     />
                 )}
             </main>
