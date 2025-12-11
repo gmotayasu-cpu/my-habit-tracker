@@ -9,7 +9,7 @@ export type RecordMap = {
     [date: string]: string[]; // date string (YYYY-MM-DD) -> array of habit IDs
 };
 
-export type BookGenre = 'novel' | 'practical' | 'manga' | 'other';
+export type BookGenre = 'novel' | 'practical' | 'manga';
 export type BookStatus = 'reading' | 'finished';
 
 export type ReadingLog = {

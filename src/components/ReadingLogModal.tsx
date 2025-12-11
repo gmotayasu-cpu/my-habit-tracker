@@ -6,9 +6,10 @@ type ReadingLogModalProps = {
     isOpen: boolean;
     onClose: () => void;
     onSave: (log: Omit<ReadingLog, 'id' | 'habitId' | 'date'>) => void;
+    previousTitles?: string[]; // For autocomplete suggestions
 };
 
-export const ReadingLogModal: React.FC<ReadingLogModalProps> = ({ isOpen, onClose, onSave }) => {
+export const ReadingLogModal: React.FC<ReadingLogModalProps> = ({ isOpen, onClose, onSave, previousTitles = [] }) => {
     const [genre, setGenre] = useState<BookGenre>('novel');
     const [status, setStatus] = useState<BookStatus>('reading');
     const [title, setTitle] = useState('');
@@ -46,13 +47,19 @@ export const ReadingLogModal: React.FC<ReadingLogModalProps> = ({ isOpen, onClos
                             placeholder="本のタイトルを入力..."
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                             autoFocus
+                            list="previous-titles"
                         />
+                        <datalist id="previous-titles">
+                            {previousTitles.map((t, i) => (
+                                <option key={i} value={t} />
+                            ))}
+                        </datalist>
                     </div>
 
                     <div>
                         <label className="block text-xs font-bold text-slate-500 mb-1">ジャンル</label>
-                        <div className="grid grid-cols-4 gap-2">
-                            {(['novel', 'practical', 'manga', 'other'] as const).map((g) => (
+                        <div className="grid grid-cols-3 gap-2">
+                            {(['novel', 'practical', 'manga'] as const).map((g) => (
                                 <button
                                     key={g}
                                     onClick={() => setGenre(g)}
@@ -63,7 +70,7 @@ export const ReadingLogModal: React.FC<ReadingLogModalProps> = ({ isOpen, onClos
                                             : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}
                                     `}
                                 >
-                                    {g === 'novel' ? '小説' : g === 'practical' ? '実用書' : g === 'manga' ? '漫画' : 'その他'}
+                                    {g === 'novel' ? '小説' : g === 'practical' ? '実用書' : '漫画'}
                                 </button>
                             ))}
                         </div>
@@ -98,7 +105,7 @@ export const ReadingLogModal: React.FC<ReadingLogModalProps> = ({ isOpen, onClos
                         </button>
                         <button
                             onClick={handleSubmit}
-                            disabled={!title.trim()}
+                            
                             className="flex-[2] py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm shadow-md transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save className="w-4 h-4" />

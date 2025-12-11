@@ -499,6 +499,7 @@ export default function App() {
                     setPendingReadingDate(null);
                 }}
                 onSave={handleSaveReadingLog}
+                previousTitles={[...new Set(readingLogs.map(l => l.title).filter(t => t))]}
             />
 
             <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-slate-200 px-6 py-3 pb-safe z-20">
