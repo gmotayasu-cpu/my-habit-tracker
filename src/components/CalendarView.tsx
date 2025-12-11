@@ -174,7 +174,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                                     {hasReading && (
                                         <div className="flex gap-0.5 mt-0.5">
                                             {dayReadings.slice(0, 3).map((r, i) => (
-                                                <span key={i} className="text-[8px]">{GENRE_EMOJI[r.genre]}</span>
+                                                <span key={i} className="text-[8px]">{GENRE_EMOJI[r.genre]}{r.genre === 'manga' && r.count && r.count > 1 ? `×${r.count}` : ''}</span>
                                             ))}
                                         </div>
                                     )}

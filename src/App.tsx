@@ -240,17 +240,17 @@ export default function App() {
         });
     };
     
-    const handleSaveReadingLog = (logData: Omit<ReadingLog, 'id' | 'habitId' | 'date'>) => {
+    const handleSaveReadingLog = (logs: Omit<ReadingLog, 'id' | 'habitId' | 'date'>[]) => {
         if (!pendingReadingDate) return;
         
-        const newLog: ReadingLog = {
-            id: `log-${Date.now()}`,
+        const newLogs: ReadingLog[] = logs.map((logData, index) => ({
+            id: `log-${Date.now()}-${index}`,
             habitId: 'h1', 
             date: pendingReadingDate,
             ...logData
-        };
+        }));
         
-        setReadingLogs(prev => [...prev, newLog]);
+        setReadingLogs(prev => [...prev, ...newLogs]);
         setShowReadingModal(false);
         setPendingReadingDate(null);
     };

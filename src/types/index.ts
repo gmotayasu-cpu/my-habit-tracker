@@ -19,4 +19,5 @@ export type ReadingLog = {
     genre: BookGenre;
     status: BookStatus;
     title: string;
+    count?: number; // 漫画の冊数（漫画ジャンルのみ使用）
 };
