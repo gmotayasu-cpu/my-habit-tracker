@@ -51,8 +51,8 @@ export const ReadingLogModal: React.FC<ReadingLogModalProps> = ({ isOpen, onClos
 
                     <div>
                         <label className="block text-xs font-bold text-slate-500 mb-1">ジャンル</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['novel', 'practical', 'other'] as const).map((g) => (
+                        <div className="grid grid-cols-4 gap-2">
+                            {(['novel', 'practical', 'manga', 'other'] as const).map((g) => (
                                 <button
                                     key={g}
                                     onClick={() => setGenre(g)}
@@ -63,7 +63,7 @@ export const ReadingLogModal: React.FC<ReadingLogModalProps> = ({ isOpen, onClos
                                             : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'}
                                     `}
                                 >
-                                    {g === 'novel' ? '小説' : g === 'practical' ? '実用書' : 'その他'}
+                                    {g === 'novel' ? '小説' : g === 'practical' ? '実用書' : g === 'manga' ? '漫画' : 'その他'}
                                 </button>
                             ))}
                         </div>
